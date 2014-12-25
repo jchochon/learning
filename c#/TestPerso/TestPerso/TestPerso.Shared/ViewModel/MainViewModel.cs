@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Windows.Input;
@@ -9,9 +10,14 @@ using GalaSoft.MvvmLight.Command;
 using System.Net;
 using System.Runtime.InteropServices.ComTypes;
 using Windows.Data.Json;
+using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media.Imaging;
 using Newtonsoft.Json;
 using TestPerso.Entity;
+using System.Threading.Tasks;
+using Windows.UI.Core;
+using Windows.UI.Xaml.Input;
+using Windows.System;
 
 namespace TestPerso.ViewModel
 {
@@ -29,41 +35,69 @@ namespace TestPerso.ViewModel
     /// </summary>
     public class MainViewModel : ViewModelBase
     {
+        #region private field
         private const string Url = "https://api.betaseries.com";
         private const string SearchShow = "/shows/search";
-        private const string GetShowPicture = "pictures/shows";
+        private const string GetShowPicture = "/pictures/shows";
         private const string Key = "d99b1417a5b3";
-        public ObservableCollection<List<object>> ResultSearchCollection { get; set; }
+        private readonly HttpClient _httpClient;
+        #endregion
 
+        #region backing field
+        private TvShow _selectedItem;
+        #endregion
+
+        #region property
+        public ObservableCollection<TvShow> ResultSearchCollection { get; set; }
+        public TvShow SelectedItem 
+        {
+            get
+            {
+                return _selectedItem;
+            }
+            set
+            {
+                _selectedItem = value;
+                RaisePropertyChanged();
+            }
+        }
         public string SearchInput { get; set; }
+        #endregion
+        
+        #region command
+        public ICommand HttpSearchCommand { get; set; }
+        public ICommand TestCommand { get; set; }
+        #endregion
 
-        public ICommand SendHttpRequestCommand { get; set; }
-
-        private HttpClient _httpClient;
-
+        
         public MainViewModel()
         {
-            SendHttpRequestCommand = new RelayCommand(SendHttpRequestExecute);
+            HttpSearchCommand = new RelayCommand(HttpSearchExecute);
+            TestCommand = new RelayCommand<object>(TestExecute);
             _httpClient = new HttpClient();
-
-            ResultSearchCollection = new ObservableCollection<List<object>>();
-            
+            ResultSearchCollection = new ObservableCollection<TvShow>();
         }
 
 
-        public async void SendHttpRequestExecute()
+        // Test
+        public void TestExecute(object e)
+        {
+            var res = e as KeyRoutedEventArgs;
+            if (res.Key == VirtualKey.Enter) ;
+        }
+
+        public async void HttpSearchExecute()
         {
             
             ResultSearchCollection.Clear();
             
             // Building query string
-            var parameters = new Dictionary<string, string>();
-            parameters.Add("key", Key);
-            parameters.Add("title", SearchInput);
+            var parameters = new Dictionary<string, string> {{"key", Key}, {"title", SearchInput}};
             var queryString = QueryStringBuilder(parameters);
             
             // Sending get request
             HttpResponseMessage response = await _httpClient.GetAsync(Url + SearchShow + queryString);
+            
             //response.EnsureSuccessStatusCode();
 
             //ResultSearchCollection.Add(response.StatusCode.ToString());
@@ -79,22 +113,46 @@ namespace TestPerso.ViewModel
                 parameters.Add("key", Key);
                 parameters.Add("id", show.id.ToString());
                 queryString = QueryStringBuilder(parameters);
-                ResultSearchCollection.Add(new List<object>
+
+                var tmp = Url + GetShowPicture + queryString;
+                Stream resp = new MemoryStream();
+                try
                 {
-                    new BitmapImage(new Uri(Url + GetShowPicture + queryString)),
-                    show
+                    resp = await _httpClient.GetStreamAsync(Url + GetShowPicture + queryString);
+                }
+                catch (HttpRequestException ex)
+                {
+                    // If HttpRequestException match to error 404 not found for a picture
+                    if (ex.HResult == -2146233088)
+                    {
+                        ResultSearchCollection.Add(new TvShow()
+                        {
+                            Show = show
+                        });
+                        continue;
+                    }
+                    else
+                        throw;
+                }
+                // Converting Win32 stream type to WinRT stream type?
+                MemoryStream memoryStream = new MemoryStream();
+                await resp.CopyToAsync(memoryStream);
+
+                var randomAccessStream = new InMemoryRandomAccessStream();
+                var output = randomAccessStream.GetOutputStreamAt(0);
+                var dataWriter = new DataWriter(output);
+                //var task = Task.Factory.StartNew(() => dataWriter.WriteBytes(memoryStream.ToArray()));
+                dataWriter.WriteBytes(memoryStream.ToArray());
+                await dataWriter.StoreAsync();
+
+                var image = new BitmapImage();
+                await image.SetSourceAsync(randomAccessStream);
+                ResultSearchCollection.Add(new TvShow()
+                {
+                    Image = image,
+                    Show = show
                 });
             }
-            
-            //foreach (Show show in res.shows)
-            //{
-            //    ResultSearchCollection.Add(show.title);
-            //    ResultSearchCollection.Add("__________________");
-            //    ResultSearchCollection.Add(show.description);
-            //    ResultSearchCollection.Add(show.
-            //        ResultSearchCollection.Add("__________________________________________________________________");
-            //}
-
         }
 
         private string QueryStringBuilder(Dictionary<string, string> queryStringDictionary)

@@ -6,25 +6,74 @@
     xmlns:local="using:TestPerso"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Triggers="using:WinRT.Triggers"
+    xmlns:Command="clr-namespace:GalaSoft.MvvmLight.Command;assembly=GalaSoft.MvvmLight.Extras.WP8"
+    xmlns:Interactivity="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
     mc:Ignorable="d">
 
-    <StackPanel Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Orientation="Horizontal">
-        <Grid>
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="150"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="150"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Row="1" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="9*"/>
+            </Grid.RowDefinitions>
+            <Grid FlowDirection="RightToLeft">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <TextBox FlowDirection="LeftToRight" Grid.Column="1" Margin="5" Text="{Binding SearchInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Stretch">
+                    <Triggers:Interactions.Triggers>
+                        <Triggers:EventTrigger EventName="KeyDown">
+                            <Triggers:InvokeCommandAction Command="{Binding TestCommand}" PassEventArgsToCommand="True" />
+                        </Triggers:EventTrigger>
+                    </Triggers:Interactions.Triggers>
+                </TextBox>
+                <Button Command="{Binding HttpSearchCommand}" VerticalAlignment="Stretch" Content="Search"></Button>
+            </Grid>
+            <ListView Grid.Row="1" ItemsSource="{Binding ResultSearchCollection}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}" VerticalAlignment="Stretch" Margin="5">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Width="60" Height="60" Margin="5" Source="{Binding Image}" VerticalAlignment="Center"/>
+                            <TextBlock Margin="5" Text="{Binding Show.title}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+
+            </ListView>
+        </Grid>
+        <StackPanel Grid.Row="1" Grid.Column="1">
+            <TextBlock Text="{Binding SelectedItem.Show.title}"/>
+            <TextBlock Text="{Binding Int}"></TextBlock>
+        </StackPanel>
+        <Grid Grid.Row="1" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="2*"/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="400"/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="4*"/>
             </Grid.ColumnDefinitions>
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Image Source="{Binding SelectedItem.Image}"></Image>
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="{Binding SelectedItem.Show.title}"></TextBlock>
                 <StackPanel Orientation="Horizontal">
-                    <TextBox Text="{Binding SearchInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="20" Width="250" Margin="20,0,5,0"></TextBox>
-                    <Button Command="{Binding SendHttpRequestCommand}">Search</Button>
+                    <!--<TextBlock Text="Nombre d'épisode: "></TextBlock>-->
+                    <TextBlock Text="{Binding SelectedItem.Show.episodes.Length}"/>
                 </StackPanel>
-                <ListView ItemsSource="{Binding ResultSearchCollection[0][0]}" Height="500" Width="1000">
-                    
-                </ListView>
             </StackPanel>
-        
 
         </Grid>
-    </StackPanel>
+    </Grid>
 </Page>

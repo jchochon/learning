@@ -143,6 +143,9 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\..\..\Json60r6\Bin\WinRT\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="WinRT.Triggers">
+      <HintPath>..\..\..\..\..\..\..\WinRTTriggers\WinRT.Triggers.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '12.0' ">
     <VisualStudioVersion>12.0</VisualStudioVersion>
