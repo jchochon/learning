@@ -97,11 +97,46 @@ int main(int argc, char* const argv[])
 
 void analyze(char *input_cmd) {
     // Création tableau
-    int i;
-    for (i = 0; i < strlen(input_cmd)/strlen(sizeof(char)) ; i++) {
-        printf(" \n", input_cmd[i]);
+    char **input_array = NULL;
+    int i, last_index = 0, n_spaces = 0;
+
+
+    for (i = 0; i < (int) strlen(input_cmd) ; i++) {
+        int j;
+        for (j = 0; j < (int) strlen(SPECIAL_CHARS) ; j++) {
+            if (input_cmd[i] == SPECIAL_CHARS[j]) {
+                n_spaces += 2;
+                input_array = realloc(input_array, sizeof(char*) * n_spaces );
+                char *tmp = malloc(sizeof(char)*(i - last_index) + 1);
+                memcpy(tmp, &input_cmd[last_index], i - last_index);
+                input_array[n_spaces-2] = tmp;
+                last_index = i;
+                //input_array = realloc(input_array, sizeof(char*) * ++n_spaces );
+                tmp = malloc(sizeof(char) + 1);
+                memcpy(tmp, &input_cmd[last_index], 1);
+                input_array[n_spaces-1] = tmp;
+                last_index++;
+            }
+        }
     }
-    
+    n_spaces += 2;
+    input_array = realloc(input_array, sizeof(char*) * n_spaces );
+    char *tmp = malloc(sizeof(char)*(i - last_index) + 1);
+    memcpy(tmp, &input_cmd[last_index], i - last_index);
+    input_array[n_spaces-2] = tmp;
+
+    input_array[n_spaces -1] = NULL;
+
+    // Print Tableau
+    //char **c = input_array;
+    //while (*c != NULL){
+    //    printf("%s\n", *c);
+    //    c++;
+    //}
+    //printf("Fin analyse\n");
+    //printf("Fin analyse\n");
+    //printf("Fin analyse\n");
+    //printf("Fin analyse\n");
 }
 
 char *get_prompt() {

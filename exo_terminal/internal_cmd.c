@@ -7,3 +7,7 @@ void change_directory (char** param) {
     if (chdir(*param) != 0)
         perror(NULL);
 }
+
+void call_charlie (char** param) {
+    
+}
