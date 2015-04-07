@@ -1,11 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "state.h"
 #include "utils.h"
 
-//#define DEBUG
+#define DEBUG
 
 void init_state(state* s) {
     s->g = 0;
@@ -13,6 +14,12 @@ void init_state(state* s) {
     s->f = 0;
     s->row = 0;
     s->col = 0;
+    // TODO: a enlever
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            s->matrix[i][j] = 0;
+        }
+    }
     s->previous_state = NULL;
 }
 
@@ -72,15 +79,81 @@ state** remove_state_from_list(state** states, state* s) {
         header++;
     }
 
-    // 
     states = realloc(states, n * sizeof(state*));
-    
     return states;
 
 }
 
+int compute_heuristic(state* s1, state* s2) {
+    // Test l'égalité des matrices de s1 & s2
+    if (s1->row != s2->row || s1->col != s2->col) {
+        // TODO: Gestion erreur
+        printf("compute_heuristic: Les dimensions des états ne sont pas égales\n");
+        exit(15);
+    }
+
+    int diff = 0;
+    for (int i = 0; i < s1->row; i++) {
+        for (int j = 0; j < s1->col; j++) {
+            if (s1->matrix[i][j] != s2->matrix[i][j])
+                diff++;
+        }
+    }
+
+    return diff;
+}
+
+state* states_contain_similar(state** states, state* s) {
+    /* Renvoi un ptr vers k si la liste contient fi
+    */
+    if (states == NULL || *states == NULL)
+        return NULL;
+    printf("zzzzzzzzzzzzzzzzzzz\n");
+    print_list(states);
+    printf("zzzzzzzzzzzzzzzzzzz\n");
+    while (*states != NULL) {
+        state* current = *states;
+        if (are_states_equal(current, s))
+            return current;
+        states++;
+    }
+
+    return NULL;
+}
+
+bool are_states_equal(state* s1, state* s2) {
+    // Test l'égalité des matrices de s1 & s2
+    if (s1->row != s2->row || s1->col != s2->col) {
+        // TODO: Gestion erreur
+        printf("are_states_equal: Les dimensions des états ne sont pas égales\n");
+        printf("%d\n", s1->row);
+        printf("%d\n", s1->col);
+        printf("%d\n", s2->row);
+        printf("%d\n", s2->col);
+        print_state(s1);
+        print_state(s2);
+        exit(15);
+    }
+
+    bool res = true;
+    for (int i = 0; i < s1->row; i++) {
+        for (int j = 0; j < s1->col; j++) {
+            if (s1->matrix[i][j] != s2->matrix[i][j])
+                return false;
+        }
+    }
+
+    return res;
+}
+
 state** add_state_into_list(state** states, state* s) {
-     // /!!!!!!!!!!!!\ Toujours avoir null à la fin de la suite de structure /!!!!!!!!!!!!\
+    printf("début add !!!!\n");
+    printf("aaaaaaaaaaaaaaaaaaaaaaaa\n");
+    print_state(s);
+    printf("states==%p\n", states);
+    printf("aaaaaaaaaaaaaaaaaaaaaaaa\n");
+    print_list(states);
+    // /!!!!!!!!!!!!\ Toujours avoir null à la fin de la suite de structure /!!!!!!!!!!!!\
 
     /*
      * Si states est à null, on l'initialise. Vision alternative: Equivalent d'un "List<State> states = new List<State>();" en POO, un pointeur
@@ -89,51 +162,49 @@ state** add_state_into_list(state** states, state* s) {
     */
     if (states == NULL) {
         // Initialisation de la liste à length == 0
-        states = malloc(sizeof(state*));
-        *states = NULL;
+        state** ptr = malloc(sizeof(state*));
+        *ptr = NULL;
+        if (ptr == NULL) {
+            fprintf(stderr, "failed to allocate memory.\n");
+            exit(-1);
+        }
+        states = ptr;
+        printf("states2==%p\n", states);
     }
 
     // récupération de la longueur de states
     int n = get_length_of_list_of_pointer((void**) states);
+    printf("n=%d\n", n);
+    printf("lala\n");
+    print_list(states);
+    printf("lala\n");
 
     // Allocation n+2 pointeurs de state. Un pour ajouter un élément, l'autre pour garder la trace de fin de liste
     states = realloc(states, n*sizeof(state*) + 2*sizeof(state*));
     // Ajout de l'élément à ajouter + d'un élément NULL
     *(states+n) = s;
     *(states+(n+1)) = NULL;
+
+    puts("fin add!!!!");
+    print_list(states);
     
     // On retourne states qui à potentiellement changé d'adresse dû à la nature de realloc
     return states;
 }
 
-state** get_childs_of(state* state) {
-    bidimensional_index index_of_zero = get_position_of_zero(state);
-
-    if (index_of_zero.i == -1 || index_of_zero.j == -1) {
-        printf("Pas de zero trouvé dans la grille: \n");
-        print_state(state);
-        exit(15);
-    }
-    
-    bidimensional_index** swapable_positions = get_swapable_positions(state, index_of_zero);
-
-    return malloc(sizeof(state**));
-}
-
-/*
-state** get_next_states(state* state) {
+state** get_next_states(state* current) {
     // On recupère l'index de la tuile 0
     //bidimensional_index index = { .i = -1, .j = -1 };
     //index.i = -1;
     //index.j = -1;
     //int index_of_zero[2] = { -1, -1 };
     //get_position_of_zero(s, &index_of_zero[0], &index_of_zero[1]);
-    bidimensional_index index_of_zero = get_position_of_zero(state);
+    bidimensional_index index_of_zero = get_position_of_zero(current);
 
     // TODO: apprendre gestion des erreur en c POO style pour se débarasser de ce exit tout moche
     if (index_of_zero.i == -1 || index_of_zero.j == -1) {
         printf("Pas de zero trouvé dans la grille: \n");
-        print_state(state);
+        print_state(current);
         exit(15);
     }
 
@@ -146,28 +217,47 @@ state** get_next_states(state* state) {
     //bidimensional_index** swapable_positions = NULL;
     //get_swapable_positions(s, index_of_zero, swapable_positions);
     // TODO: faire fonction pour free swapable_positions
-    bidimensional_index** swapable_positions = get_swapable_positions(state, index_of_zero);
+    bidimensional_index** swapable_positions = get_swapable_positions(current, index_of_zero);
 
     state** childs = malloc(sizeof(state*));
+    childs = NULL;
+    // n = nb d'élément dans la liste childs
+    int n = 0;
 
     // Pour chaque position swapable, on créer un nouvel état
     while (*swapable_positions != NULL) {
         state* new_state = create_new_state();
-        new_state->g = state->g + 1;
-        new_state->row = state->row;
-        new_state->col = state->col;
+        new_state->g = current->g + 1;
+        new_state->row = current->row;
+        new_state->col = current->col;
+        new_state->previous_state = (struct state*) current;
         for (int i = 0; i < new_state->row; i++) {
-            memcpy(new_state->matrix[i], state->matrix[i], state->row*sizeof(int));
+            memcpy(new_state->matrix[i], current->matrix[i], current->row*sizeof(int));
         }
-        swapable_position++;
+        // On swap les positions dans les nouveaux états
+        new_state->matrix[index_of_zero.i][index_of_zero.j] = new_state->matrix[(*swapable_positions)->i][(*swapable_positions)->j];
+        new_state->matrix[(*swapable_positions)->i][(*swapable_positions)->j] = 0;
+        
+        // Ajout à la liste des enfants
+        if (childs == NULL) {
+            childs = malloc(sizeof(state*));
+            *childs = NULL;
+        }
+
+        childs = realloc(childs, n*sizeof(state*) + 2*sizeof(state*));
+        *(childs+n) = new_state;
+        *(childs+(n+1)) = NULL;
+        
+        swapable_positions++;
+        n++;
     }
 
-    // Free des positions
-    
+    // TODO: Free des positions
 
-    exit(15);
+    printf("okkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk\n");
+    return childs;
+    
 }
-*/
 
 bidimensional_index** get_swapable_positions(state* s, bidimensional_index index_of_zero) {
     bidimensional_index** swapable_positions = NULL;
@@ -181,39 +271,39 @@ bidimensional_index** get_swapable_positions(state* s, bidimensional_index index
     
     // Si il existe une tuile à gauche de 0
     if (j-1 > -1) {
-        swapable_positions = realloc(swapable_positions, n*sizeof(bidimensional_index*) + sizeof(bidimensional_index*));
+        swapable_positions = realloc(swapable_positions, n*sizeof(bidimensional_index*) + 2*sizeof(bidimensional_index*));
         *(swapable_positions+n) = malloc(sizeof(bidimensional_index));
         (*(swapable_positions+n))->i = i;
         (*(swapable_positions+n))->j = j - 1;
         *(swapable_positions+(n+1)) = NULL;
-        n += 1;
+        n++;
     }
     // Si il existe une tuile au dessus de 0
     if (i-1 > -1) {
-        swapable_positions = realloc(swapable_positions, n*sizeof(bidimensional_index*) + sizeof(bidimensional_index*));
+        swapable_positions = realloc(swapable_positions, n*sizeof(bidimensional_index*) + 2*sizeof(bidimensional_index*));
         *(swapable_positions+n) = malloc(sizeof(bidimensional_index));
         (*(swapable_positions+n))->i = i - 1;
         (*(swapable_positions+n))->j = j;
         *(swapable_positions+(n+1)) = NULL;
-        n += 1;
+        n++;
     }
     // Si il existe une tuile à droite de 0
     if (j+1 < s->col) {
-        swapable_positions = realloc(swapable_positions, n*sizeof(bidimensional_index*) + sizeof(bidimensional_index*));
+        swapable_positions = realloc(swapable_positions, n*sizeof(bidimensional_index*) + 2*sizeof(bidimensional_index*));
         *(swapable_positions+n) = malloc(sizeof(bidimensional_index));
         (*(swapable_positions+n))->i = i;
         (*(swapable_positions+n))->j = j + 1;
         *(swapable_positions+(n+1)) = NULL;
-        n += 1;
+        n++;
     }
     // Si il existe une tuile en dessous de 0
     if (i+1 < s->row) {
-        swapable_positions = realloc(swapable_positions, n*sizeof(bidimensional_index*) + sizeof(bidimensional_index*));
+        swapable_positions = realloc(swapable_positions, n*sizeof(bidimensional_index*) + 2*sizeof(bidimensional_index*));
         *(swapable_positions+n) = malloc(sizeof(bidimensional_index));
         (*(swapable_positions+n))->i = i + 1;
         (*(swapable_positions+n))->j = j;
         *(swapable_positions+(n+1)) = NULL;
-        n += 1;
+        n++;
     }
     
     return swapable_positions;
@@ -240,4 +330,24 @@ state* create_new_state() {
     state* s = malloc(sizeof(state));
     init_state(s);
     return s;
+}
+
+void print_list(state** list){ 
+    #ifdef DEBUG
+    printf("début affichage liste\n");
+    #endif
+    if (list == NULL || *list == NULL) {
+        printf("liste non initialisée\n");
+        return;
+    }
+
+    while (*list != NULL) {
+        printf("______________________\n");
+        print_state(*list);
+        list++;
+    }
+    #ifdef DEBUG
+    printf("fin affichage list\n");
+    #endif
+    
 }

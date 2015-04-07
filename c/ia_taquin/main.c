@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "state.h"
 #include "utils.h"
@@ -114,13 +115,60 @@ int main() {
     printf("Début de l'algoooooooooooooooooooooooooooooooooo\n");
     printf("opened_states = %p\n", opened_states);
     #endif
+    //int i_test = 0;
     while (get_length_of_list_of_pointer((void**) opened_states) > 0) {
         // Recherche du noeud le plus faible dans opened_states
         state* current_state = first_state_by_f(opened_states);
-        // Génération des fils
-        //state** childs = get_next_states(current_state);
+        //printf("ooooooooooooooooooooooooooo\n");
+        //printf("passage: %d\n", i_test++);
+        //print_list(opened_states);
 
-        printf("%p\n", opened_states);
+
+        // On retire le noeud courrant de open et on l'ajoute à closed
+        remove_state_from_list(opened_states, current_state);
+        add_state_into_list(closed_states, current_state);
+
+        // Génération des fils
+        state** childs = get_next_states(current_state);
+
+        // Pour chaque fils:
+        while (*childs != NULL) {
+            state* child = *childs;
+            /* On évalue si c'est une possible solution (si 
+               l'heuristique == 0)
+            */
+            child->h = compute_heuristic(child, end);
+            child->f = child->g + child->h;
+            if (child->h  == 0) {
+                child->f = child->g + child->h;
+                printf("Premiere solution trouvée: \n");
+                print_state(child);
+                return 0;
+            }
+            /* Recherche d'un état semblable a l'enfant courrant 
+               dans ouvert et dans fermé
+            */
+            state* state_from_opened = states_contain_similar(opened_states, child);
+            state* state_from_closed = states_contain_similar(closed_states, child);
+            if (!state_from_opened && !state_from_closed) 
+                add_state_into_list(opened_states, child);
+            else if (state_from_opened) {
+                if (child->f < state_from_opened->f) {
+                    remove_state_from_list(opened_states, state_from_opened);
+                    add_state_into_list(opened_states, child);
+                }
+            }
+            else {
+                if (child->f < state_from_closed->f) {
+                    remove_state_from_list(closed_states, state_from_opened);
+                    add_state_into_list(opened_states, child);
+                    
+                }
+             
+            }
+            childs++;
+        }
+
     }
     #ifdef DEBUG
     printf("fin algooooooooooooooo\n");
