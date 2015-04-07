@@ -47,25 +47,54 @@ int main() {
     printf("Début du test d'ajout d'un état dans une liste d'états\n");
     state* a = create_new_state();
     a->f = 12;
+    a->row = 3;
+    a->col = 3;
     state* b = create_new_state();
     b->f = 7;
+    b->row = 3;
+    b->col = 3;
     state* c = create_new_state();
     c->f = 10;
+    c->row = 3;
+    c->col = 3;
     state* d = create_new_state();
     d->f = 2;
+    d->row = 3;
+    d->col = 3;
     state* e = create_new_state();
     e->f = 17;
+    e->row = 3;
+    e->col = 3;
     state* f = create_new_state();
     f->f = 20;
+    f->row = 3;
+    f->col = 3;
     state* g = create_new_state();
     g->f = 22;
+    g->row = 3;
+    g->col = 3;
+    puts("add state 1");
     opened_states = add_state_into_list(opened_states, a);
+    opened_states = add_state_into_list(opened_states, b);
+    print_list(opened_states);
+    puts("remove state");
+    opened_states = remove_state_from_list(opened_states, a);
+    print_list(opened_states);
+    puts("add state 2");
+    opened_states = add_state_into_list(opened_states, a);
+
+    print_list(opened_states);
+    exit(15);
+
     opened_states = add_state_into_list(opened_states, b);
     opened_states = add_state_into_list(opened_states, c);
     opened_states = add_state_into_list(opened_states, d);
     opened_states = add_state_into_list(opened_states, e);
     opened_states = add_state_into_list(opened_states, f);
     opened_states = add_state_into_list(opened_states, g);
+
+    //state lili = { .row = 3, .col = 3, .f = 2, .matrix= { { 1, 2, 3}, { 4, 5, 6}, {7, 8, 9}}};
+
     int opened_states_length = get_length_of_list_of_pointer((void**)opened_states);
     if (opened_states_length == 7) 
         printf("Succès");
@@ -125,8 +154,9 @@ int main() {
 
 
         // On retire le noeud courrant de open et on l'ajoute à closed
-        remove_state_from_list(opened_states, current_state);
-        add_state_into_list(closed_states, current_state);
+        //TODO: a remettre
+        opened_states = remove_state_from_list(opened_states, current_state);
+        closed_states = add_state_into_list(closed_states, current_state);
 
         // Génération des fils
         state** childs = get_next_states(current_state);
@@ -142,26 +172,28 @@ int main() {
             if (child->h  == 0) {
                 child->f = child->g + child->h;
                 printf("Premiere solution trouvée: \n");
-                print_state(child);
+                print_result(child);
                 return 0;
             }
             /* Recherche d'un état semblable a l'enfant courrant 
                dans ouvert et dans fermé
             */
+            puts("comparaison de *opened_states et child");
+            print_state(*opened_states);
             state* state_from_opened = states_contain_similar(opened_states, child);
             state* state_from_closed = states_contain_similar(closed_states, child);
             if (!state_from_opened && !state_from_closed) 
-                add_state_into_list(opened_states, child);
+                opened_states = add_state_into_list(opened_states, child);
             else if (state_from_opened) {
                 if (child->f < state_from_opened->f) {
                     remove_state_from_list(opened_states, state_from_opened);
-                    add_state_into_list(opened_states, child);
+                    opened_states = add_state_into_list(opened_states, child);
                 }
             }
             else {
                 if (child->f < state_from_closed->f) {
                     remove_state_from_list(closed_states, state_from_opened);
-                    add_state_into_list(opened_states, child);
+                    opened_states = add_state_into_list(opened_states, child);
                     
                 }
              

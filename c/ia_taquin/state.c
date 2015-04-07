@@ -24,9 +24,14 @@ void init_state(state* s) {
 }
 
 void print_state(state* s) {
+    if (s == NULL) {
+        puts("print state: NULL");
+        return;
+    }
     printf("G: %d\n", s->g);
     printf("H: %d\n", s->h);
     printf("F: %d\n", s->f);
+    printf("Dimensions: [%d][%d]\n", s->row, s->col);
 
     printf("State's grid: \n");
 
@@ -108,13 +113,10 @@ state* states_contain_similar(state** states, state* s) {
     */
     if (states == NULL || *states == NULL)
         return NULL;
-    printf("zzzzzzzzzzzzzzzzzzz\n");
-    print_list(states);
-    printf("zzzzzzzzzzzzzzzzzzz\n");
+
     while (*states != NULL) {
-        state* current = *states;
-        if (are_states_equal(current, s))
-            return current;
+        if (are_states_equal(*states, s))
+            return *states;
         states++;
     }
 
@@ -122,24 +124,27 @@ state* states_contain_similar(state** states, state* s) {
 }
 
 bool are_states_equal(state* s1, state* s2) {
-    // Test l'égalité des matrices de s1 & s2
-    if (s1->row != s2->row || s1->col != s2->col) {
-        // TODO: Gestion erreur
-        printf("are_states_equal: Les dimensions des états ne sont pas égales\n");
-        printf("%d\n", s1->row);
-        printf("%d\n", s1->col);
-        printf("%d\n", s2->row);
-        printf("%d\n", s2->col);
+    // Test que les dimensions sont > à 0
+    if (!(s1->row > 0 && s1->col > 0 && s2->row > 0 && s2->col > 0)) {
+        puts("Les dimensions sont incorrectes");
         print_state(s1);
         print_state(s2);
         exit(15);
     }
+    // Test l'égalité des matrices de s1 & s2
+    if (s1->row != s2->row || s1->col != s2->col) {
+        // TODO: Gestion erreur
+        printf("are_states_equal: Les dimensions des états ne sont pas égales\n");
+        exit(15);
+    }
+
 
     bool res = true;
     for (int i = 0; i < s1->row; i++) {
         for (int j = 0; j < s1->col; j++) {
-            if (s1->matrix[i][j] != s2->matrix[i][j])
+            if (s1->matrix[i][j] != s2->matrix[i][j]) {
                 return false;
+            }
         }
     }
 
@@ -147,12 +152,12 @@ bool are_states_equal(state* s1, state* s2) {
 }
 
 state** add_state_into_list(state** states, state* s) {
-    printf("début add !!!!\n");
-    printf("aaaaaaaaaaaaaaaaaaaaaaaa\n");
-    print_state(s);
-    printf("states==%p\n", states);
-    printf("aaaaaaaaaaaaaaaaaaaaaaaa\n");
-    print_list(states);
+    //printf("début add !!!!\n");
+    //printf("aaaaaaaaaaaaaaaaaaaaaaaa\n");
+    //print_state(s);
+    //printf("states==%p\n", states);
+    //printf("aaaaaaaaaaaaaaaaaaaaaaaa\n");
+    //print_list(states);
     // /!!!!!!!!!!!!\ Toujours avoir null à la fin de la suite de structure /!!!!!!!!!!!!\
 
     /*
@@ -174,10 +179,10 @@ state** add_state_into_list(state** states, state* s) {
 
     // récupération de la longueur de states
     int n = get_length_of_list_of_pointer((void**) states);
-    printf("n=%d\n", n);
-    printf("lala\n");
-    print_list(states);
-    printf("lala\n");
+    //printf("n=%d\n", n);
+    //printf("lala\n");
+    //print_list(states);
+    //printf("lala\n");
 
     // Allocation n+2 pointeurs de state. Un pour ajouter un élément, l'autre pour garder la trace de fin de liste
     states = realloc(states, n*sizeof(state*) + 2*sizeof(state*));
@@ -186,7 +191,7 @@ state** add_state_into_list(state** states, state* s) {
     *(states+(n+1)) = NULL;
 
     puts("fin add!!!!");
-    print_list(states);
+    //print_list(states);
     
     // On retourne states qui à potentiellement changé d'adresse dû à la nature de realloc
     return states;
@@ -350,4 +355,18 @@ void print_list(state** list){
     printf("fin affichage list\n");
     #endif
     
+}
+
+void print_result(state* s) {
+    int n = s->g + 1;
+    state *results[n];
+
+    while(s != NULL) {
+        results[s->g] = s;
+        s = s->previous_state;
+    }
+
+    puts("___________________________________");
+    for (int i = 0; i < n; i++)
+        print_state(results[i]);
 }
