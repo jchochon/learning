@@ -20,9 +20,9 @@ namespace TestPerso
     /// <summary>
     /// Une page vide peut être utilisée seule ou constituer une page de destination au sein d'un frame.
     /// </summary>
-    public sealed partial class MainPage : Page
+    public sealed partial class MainPage2 : Page
     {
-        public MainPage()
+        public MainPage2()
         {
             this.InitializeComponent();
         }

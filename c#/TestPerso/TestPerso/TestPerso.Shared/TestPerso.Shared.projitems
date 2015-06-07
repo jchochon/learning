@@ -17,7 +17,8 @@
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)Entity\Show.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Entity\TvShow.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ViewModel\MainViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModel\HomeViewModel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModel\SearchViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ViewModel\ViewModelLocator.cs" />
   </ItemGroup>
 </Project>
